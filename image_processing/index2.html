@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Album</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Add your custom CSS styles here */
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Photo Album</h1>
+    <!-- Image -->
+    <img id="albumImage" src="placeholder.jpg" class="img-fluid" alt="Album Image">
+    <!-- Image Upload -->
+    <input type="file" id="imageInput" accept="image/*">
+    <!-- Buttons for image processing operations -->
+    <div class="mt-3">
+      <button onclick="checkImageColor()">Check Color</button>
+      <button onclick="makeReddish()">Make Reddish</button>
+      <button onclick="duplicateImage()">Duplicate Image</button>
+      <button onclick="increaseBrightness()">Increase Brightness</button>
+      <button onclick="reduceResolution()">Reduce Resolution</button>
+      <button onclick="createAvatar()">Create Avatar</button>
+      <button onclick="convertToGrayScale()">Convert to Gray Scale</button>
+      <button onclick="generateQRCode()">Generate QR Code</button>
+      <!-- Add more buttons for other operations -->
+      <canvas id="outputCanvas" style="display:none;"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('imageInput');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Function to handle image upload
+    document.getElementById('imageInput').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = document.getElementById('albumImage');
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+
+    // Function to convert the image to grayscale
+    function convertToGrayScale() {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      for (let i = 0; i < pixels.length; i += 4) {
+        const avg = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+        pixels[i] = avg; // Red
+        pixels[i + 1] = avg; // Green
+        pixels[i + 2] = avg; // Blue
+      }
+      ctx.putImageData(imageData, 0, 0);
+      const outputCanvas = document.getElementById('outputCanvas');
+      outputCanvas.width = canvas.width;
+      outputCanvas.height = canvas.height;
+      const outputCtx = outputCanvas.getContext('2d');
+      outputCtx.drawImage(canvas, 0, 0);
+    }
+    // Function to load and draw the image onto a canvas
+    function loadImage(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Function to generate QR code from the image
+    function generateQRCode() {
+      const imageData = canvas.toDataURL(); // Convert canvas image to data URL
+      const qrCode = new QRCode(document.getElementById('outputCanvas'), {
+        text: imageData,
+        width: 100, // Set width and height of QR code
+        height: 100
+      });
+    }
+    // Function to create an avatar from the image
+    function createAvatar() {
+      const imageSize = Math.min(canvas.width, canvas.height);
+      const avatarSize = 100; // Set the size of the avatar
+
+      // Calculate the dimensions and position for cropping
+      const cropX = (canvas.width - imageSize) / 2;
+      const cropY = (canvas.height - imageSize) / 2;
+
+      // Create a new canvas for the avatar
+      const avatarCanvas = document.createElement('canvas');
+      const avatarCtx = avatarCanvas.getContext('2d');
+      avatarCanvas.width = avatarSize;
+      avatarCanvas.height = avatarSize;
+
+      // Crop and resize the image to create the avatar
+      avatarCtx.drawImage(canvas, cropX, cropY, imageSize, imageSize, 0, 0, avatarSize, avatarSize);
+
+      // Display the avatar
+      const outputCanvas = document.getElementById('outputCanvas');
+      outputCanvas.width = avatarSize;
+      outputCanvas.height = avatarSize;
+      const outputCtx = outputCanvas.getContext('2d');
+      outputCtx.drawImage(avatarCanvas, 0, 0);
+    }
+
+
+    // Function to increase the brightness of the image
+    function increaseBrightness() {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      for (let i = 0; i < pixels.length; i += 4) {
+        // Increase the RGB components of each pixel
+        pixels[i] += 20; // Red
+        pixels[i + 1] += 20; // Green
+        pixels[i + 2] += 20; // Blue
+      }
+      ctx.putImageData(imageData, 0, 0);
+      const outputCanvas = document.getElementById('outputCanvas');
+      outputCanvas.width = canvas.width;
+      outputCanvas.height = canvas.height;
+      const outputCtx = outputCanvas.getContext('2d');
+      outputCtx.drawImage(canvas, 0, 0);
+    }
+
+    // Function to check if an image is reddish, blueish, or greenish
+    function checkImageColor() {
+      // Get the image element
+      const img = document.getElementById('albumImage');
+      // Get the image data
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+      const imageData = ctx.getImageData(0, 0, img.width, img.height);
+      const pixels = imageData.data;
+      let redCount = 0, greenCount = 0, blueCount = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i] > pixels[i + 1] + pixels[i + 2]) {
+          redCount++;
+        } else if (pixels[i + 1] > pixels[i] + pixels[i + 2]) {
+          greenCount++;
+        } else {
+          blueCount++;
+        }
+      }
+      const totalPixels = img.width * img.height;
+      const redPercentage = (redCount / totalPixels) * 100;
+      const greenPercentage = (greenCount / totalPixels) * 100;
+      const bluePercentage = (blueCount / totalPixels) * 100;
+      // Check if the image is reddish, blueish, or greenish
+      if (redPercentage > 50) {
+        alert('Image is reddish!');
+      } else if (bluePercentage > 50) {
+        alert('Image is blueish!');
+      } else if (greenPercentage > 50) {
+        alert('Image is greenish!');
+      } else {
+        alert('Image does not have a dominant color.');
+      }
+    }
+
+    // Function to make the image reddish
+    function makeReddish() {
+      // Get the image element
+      const img = document.getElementById('albumImage');
+      // Get the canvas context
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+      const imageData = ctx.getImageData(0, 0, img.width, img.height);
+      const pixels = imageData.data;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i] <= pixels[i + 1] + pixels[i + 2]) {
+          pixels[i] = 255;
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      // Replace the image source with the modified image
+      img.src = canvas.toDataURL();
+    }
+
+    function duplicateImage() {
+      const img = new Image();
+      img.onload = function() {
+        canvas.width = img.width * 2;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, img.width, 0);
+        const outputCanvas = document.getElementById('outputCanvas');
+        outputCanvas.width = canvas.width;
+        outputCanvas.height = canvas.height;
+        const outputCtx = outputCanvas.getContext('2d');
+        outputCtx.drawImage(canvas, 0, 0);
+      }
+      img.src = canvas.toDataURL();
+    }
+
+
+    // // Function to increase the brightness of the image
+    // function increaseBrightness() {
+    //   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    //   const pixels = imageData.data;
+    //   for (let i = 0; i < pixels.length; i += 4) {
+    //     // Increase the RGB components of each pixel
+    //     pixels[i] += 20; // Red
+    //     pixels[i + 1] += 20; // Green
+    //     pixels[i + 2] += 20; // Blue
+    //   }
+    //   ctx.putImageData(imageData, 0, 0);
+    //   const outputCanvas = document.getElementById('outputCanvas');
+    //   outputCanvas.width = canvas.width;
+    //   outputCanvas.height = canvas.height;
+    //   const outputCtx = outputCanvas.getContext('2d');
+    //   outputCtx.drawImage(canvas, 0, 0);
+    // }
+
+    // Function to reduce the resolution of the image
+    function reduceResolution() {
+      const scaleFactor = 0.5; // Adjust this value for desired resolution reduction
+      const newWidth = canvas.width * scaleFactor;
+      const newHeight = canvas.height * scaleFactor;
+
+      const newCanvas = document.createElement('canvas');
+      const newCtx = newCanvas.getContext('2d');
+
+      newCanvas.width = newWidth;
+      newCanvas.height = newHeight;
+
+      // Draw the original image onto the new canvas with reduced dimensions
+      newCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
+
+      // Clear the original canvas
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+
+      // Draw the reduced image back onto the original canvas
+      ctx.drawImage(newCanvas, 0, 0, newWidth, newHeight);
+
+      const outputCanvas = document.getElementById('outputCanvas');
+      outputCanvas.width = canvas.width;
+      outputCanvas.height = canvas.height;
+      const outputCtx = outputCanvas.getContext('2d');
+      outputCtx.drawImage(canvas, 0, 0);
+    }
+    // Add event listener for image input
+    input.addEventListener('change', loadImage);
+    // Implement other image processing functions here
+    // input.addEventListener('change', loadImage);
+    // ...
+  </script>
+</body>
+</html>

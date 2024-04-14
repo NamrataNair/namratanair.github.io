@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .board-row {
+      display: flex;
+    }
+    .cell {
+      width: 50px;
+      height: 50px;
+      border: 1px solid #ccc;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <div id="mode">
+    <button onclick="startGame('two-player')">Two Player</button>
+    <button onclick="startGame('single-player')">Single Player</button>
+  </div>
+  <div class="board"></div>
+  <button onclick="undo()">Undo</button>
+  
+  <script>
+    let currentPlayer = 'X';
+    let cells = [];
+    let boardSize = 3;
+    let gameMode = '';
+
+    function startGame(mode) {
+      gameMode = mode;
+      document.getElementById('mode').style.display = 'none';
+      cells = Array.from({ length: boardSize * boardSize }, () => '');
+      renderBoard();
+    }
+
+    function renderBoard() {
+      const board = document.querySelector('.board');
+      board.innerHTML = '';
+      for (let i = 0; i < boardSize; i++) {
+        const row = document.createElement('div');
+        row.classList.add('board-row');
+        for (let j = 0; j < boardSize; j++) {
+          const index = i * boardSize + j;
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.textContent = cells[index];
+          cell.addEventListener('click', () => handleCellClick(index));
+          row.appendChild(cell);
+        }
+        board.appendChild(row);
+      }
+    }
+
+    function handleCellClick(index) {
+      if (!cells[index]) {
+        cells[index] = currentPlayer;
+        renderBoard();
+        if (checkWin(currentPlayer)) {
+          alert(`${currentPlayer} wins!`);
+          resetGame();
+          return;
+        }
+        if (checkDraw()) {
+          alert("It's a draw!");
+          resetGame();
+          return;
+        }
+        if (gameMode === 'single-player' && currentPlayer === 'X') {
+          makeAIMove();
+        } else {
+          currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        }
+      }
+    }
+
+    function checkWin(player) {
+      const winPatterns = [];
+      for (let i = 0; i < boardSize; i++) {
+        // Horizontal
+        winPatterns.push(Array.from({ length: boardSize }, (_, j) => i * boardSize + j));
+        // Vertical
+        winPatterns.push(Array.from({ length: boardSize }, (_, j) => i + j * boardSize));
+      }
+      // Diagonal
+      winPatterns.push(Array.from({ length: boardSize }, (_, i) => i * (boardSize + 1)));
+      winPatterns.push(Array.from({ length: boardSize }, (_, i) => (i + 1) * (boardSize - 1)));
+
+      return winPatterns.some(pattern =>
+        pattern.every(index => cells[index] === player)
+      );
+    }
+
+    function checkDraw() {
+      return cells.every(cell => cell !== '');
+    }
+
+    function resetGame() {
+      cells = Array.from({ length: boardSize * boardSize }, () => '');
+      currentPlayer = 'X';
+      renderBoard();
+      document.getElementById('mode').style.display = 'block';
+    }
+
+    function undo() {
+      const lastMoveIndex = cells.lastIndexOf('X') !== -1 ? cells.lastIndexOf('X') : cells.lastIndexOf('O');
+      cells[lastMoveIndex] = '';
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      renderBoard();
+    }
+
+    function makeAIMove() {
+      // Implement AI logic here (optional for now)
+      // For simplicity, AI will randomly pick an empty cell
+      const emptyCells = cells.reduce((acc, val, index) => {
+        if (val === '') acc.push(index);
+        return acc;
+      }, []);
+      const randomIndex = Math.floor(Math.random() * emptyCells.length);
+      const aiMove = emptyCells[randomIndex];
+      cells[aiMove] = 'O';
+      renderBoard();
+      if (checkWin('O')) {
+        alert('AI wins!');
+        resetGame();
+      }
+    }
+  </script>
+</body>
+</html>

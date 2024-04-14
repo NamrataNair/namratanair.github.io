@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wordle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .input-container {
+      margin-top: 20px;
+    }
+    .letter-input {
+      width: 30px;
+      margin: 0 5px;
+      text-transform: uppercase;
+    }
+    #guessBtn {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Wordle</h1>
+  <div class="input-container">
+    <input type="text" class="letter-input" maxlength="1" />
+    <input type="text" class="letter-input" maxlength="1" />
+    <input type="text" class="letter-input" maxlength="1" />
+    <input type="text" class="letter-input" maxlength="1" />
+    <input type="text" class="letter-input" maxlength="1" />
+    <button id="guessBtn">Guess</button>
+  </div>
+  <div id="result"></div>
+
+  <script>
+    const wordList = ["APPLE", "BANANA", "ORANGE", "MANGO", "PEACH"];
+    const maxAttempts = 6;
+    let secretWord = "";
+    let attemptsLeft = maxAttempts;
+
+    function initializeGame() {
+      secretWord = generateRandomWord();
+      attemptsLeft = maxAttempts;
+      document.getElementById('result').textContent = '';
+      document.querySelectorAll('.letter-input').forEach(input => {
+        input.value = '';
+      });
+    }
+
+    function generateRandomWord() {
+      const randomIndex = Math.floor(Math.random() * wordList.length);
+      return wordList[randomIndex];
+    }
+
+    function validateGuess() {
+      const guess = Array.from(document.querySelectorAll('.letter-input'), input => input.value.toUpperCase()).join('');
+      if (!/^[A-Z]{5}$/i.test(guess)) {
+        alert('Please enter a valid 5-letter word.');
+        return false;
+      }
+      return true;
+    }
+
+    function checkGuess() {
+      const guess = Array.from(document.querySelectorAll('.letter-input'), input => input.value.toUpperCase()).join('');
+      let result = '';
+      for (let i = 0; i < guess.length; i++) {
+        if (guess[i] === secretWord[i]) {
+          result += '●'; // Correct letter in correct position
+        } else if (secretWord.includes(guess[i])) {
+          result += '○'; // Correct letter in wrong position
+        } else {
+          result += '◇'; // Incorrect letter
+        }
+      }
+      document.getElementById('result').textContent = result;
+      attemptsLeft--;
+      if (result === '●●●●●') {
+        alert('Congratulations! You guessed the word correctly.');
+        initializeGame();
+      } else if (attemptsLeft === 0) {
+        alert(`Sorry, you've run out of attempts. The word was ${secretWord}.`);
+        initializeGame();
+      }
+    }
+
+    document.getElementById('guessBtn').addEventListener('click', () => {
+      if (validateGuess()) {
+        checkGuess();
+      }
+    });
+
+    initializeGame();
+  </script>
+</body>
+</html>
